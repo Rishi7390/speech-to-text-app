@@ -48,3 +48,24 @@ Screen 1 — Recorder + Live Transcript
 
 ### History Screen
 (Add image/sketch)
+
+## Day 2 Progress
+
+### Completed UI Components
+- Header
+- Recorder Panel
+- Transcript Panel
+
+### Pages Created
+- Home Page (/)
+- History Page (/history)
+
+### Features Added
+- Start button
+- Stop button
+- Transcript placeholder
+- React state setup
+
+### Styling
+- Tailwind CSS integrated
+- Responsive layout added
