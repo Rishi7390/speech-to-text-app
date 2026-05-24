@@ -69,3 +69,38 @@ Screen 1 — Recorder + Live Transcript
 ### Styling
 - Tailwind CSS integrated
 - Responsive layout added
+
+
+---
+## Day 3 — Client-side Audio Recording
+
+### Features Implemented
+- Microphone permission request using:
+  ```javascript
+  navigator.mediaDevices.getUserMedia({
+    audio: true
+  })
+
+  ---
+
+# Day 4 — Flask Backend Upload Endpoint
+
+```md id="readme002"
+## Day 4 — Flask Backend Upload Endpoint
+
+### Features Implemented
+- Flask backend setup
+- CORS enabled using flask-cors
+- `/transcribe` POST endpoint created
+- Multipart audio upload handling
+- Uploaded files saved locally
+- JSON response returned successfully
+
+### Tech Used
+- Flask
+- Flask-CORS
+- Python
+
+### API Endpoint
+```http
+POST /transcribe
