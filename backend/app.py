@@ -1,8 +1,16 @@
 from flask import Flask, request, jsonify
-
 from flask_cors import CORS
 
+from dotenv import load_dotenv
+
+import requests
 import os
+
+# Load environment variables
+load_dotenv()
+
+# Get API key
+DEEPGRAM_API_KEY = os.getenv("1736888ed9a4309d5392fc113112c68120d06709")
 
 # Create Flask app
 app = Flask(__name__)
@@ -19,7 +27,15 @@ os.makedirs(
     exist_ok=True
 )
 
-# Upload endpoint
+# Home route
+@app.route("/")
+def home():
+
+    return {
+        "message": "Backend running"
+    }
+
+# Transcribe endpoint
 @app.route(
     '/transcribe',
     methods=['POST']
@@ -37,7 +53,7 @@ def transcribe():
             'error': 'no file'
         }), 400
 
-    # Create save path
+    # Save file path
     path = os.path.join(
         UPLOAD_FOLDER,
         f.filename
@@ -46,14 +62,38 @@ def transcribe():
     # Save uploaded file
     f.save(path)
 
-    # Return response
+    # Open audio file
+    with open(path, 'rb') as audio:
+
+        # Send to Deepgram
+        response = requests.post(
+
+            "https://api.deepgram.com/v1/listen",
+
+            headers={
+                "Authorization": f"Token {DEEPGRAM_API_KEY}",
+                "Content-Type": "audio/webm"
+            },
+
+            data=audio
+        )
+
+    # Convert response to JSON
+    result = response.json()
+
+    try:
+
+        transcript = result["results"]["channels"][0]["alternatives"][0]["transcript"]
+
+    except:
+
+        transcript = "Could not transcribe audio"
+
+    # Return transcript
     return jsonify({
 
-        'status': 'ok',
+        "transcript": transcript
 
-        'message': 'received',
-
-        'filename': f.filename
     })
 
 # Run Flask app

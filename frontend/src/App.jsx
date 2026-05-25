@@ -16,6 +16,14 @@ function App() {
   const [audioURL, setAudioURL] =
     useState("");
 
+  // Transcript text
+  const [transcript, setTranscript] =
+    useState("");
+
+  // Loading state
+  const [loading, setLoading] =
+    useState(false);
+
   // Timer
   const [seconds, setSeconds] =
     useState(0);
@@ -38,91 +46,159 @@ function App() {
 
   }, [isRecording]);
 
-  // Start Recording
-  const startRecording = async () => {
+  // Send audio to backend
+  const sendAudioToBackend =
+    async (audioBlob) => {
 
-    try {
+      try {
 
-      // Ask microphone permission
-      const stream =
-        await navigator.mediaDevices
-          .getUserMedia({
-            audio: true,
-          });
+        setLoading(true);
 
-      // Create MediaRecorder
-      const mediaRecorder =
-        new MediaRecorder(stream);
+        // Create form data
+        const form = new FormData();
 
-      mediaRecorderRef.current =
-        mediaRecorder;
+        form.append(
+          "file",
+          audioBlob,
+          "speech.webm"
+        );
 
-      // Clear old chunks
-      chunksRef.current = [];
+        // Send request
+        const res = await fetch(
 
-      // Save chunks
-      mediaRecorder.ondataavailable =
-        (event) => {
+          "http://localhost:5000/transcribe",
 
-          if (event.data.size > 0) {
-
-            chunksRef.current.push(
-              event.data
-            );
-          }
-        };
-
-      // When recording stops
-      mediaRecorder.onstop = () => {
-
-        // Create Blob
-        const blob = new Blob(
-          chunksRef.current,
           {
-            type: "audio/webm",
+            method: "POST",
+            body: form,
           }
         );
 
-        // Create local URL
-        const url =
-          URL.createObjectURL(blob);
+        // Convert response
+        const data = await res.json();
 
-        // Save audio URL
-        setAudioURL(url);
-      };
+        // Save transcript
+        setTranscript(
+          data.transcript
+        );
 
-      // Start recording
-      mediaRecorder.start();
+      } catch (error) {
 
-      setIsRecording(true);
+        console.error(error);
 
-      setSeconds(0);
+        alert(
+          "Error sending audio"
+        );
 
-    } catch (error) {
+      } finally {
 
-      console.error(error);
+        setLoading(false);
+      }
+    };
 
-      alert(
-        "Microphone permission denied"
-      );
-    }
-  };
+  // Start Recording
+  const startRecording =
+    async () => {
+
+      try {
+
+        // Ask microphone permission
+        const stream =
+          await navigator
+            .mediaDevices
+            .getUserMedia({
+              audio: true,
+            });
+
+        // Create MediaRecorder
+        const mediaRecorder =
+          new MediaRecorder(stream);
+
+        mediaRecorderRef.current =
+          mediaRecorder;
+
+        // Clear old chunks
+        chunksRef.current = [];
+
+        // Save chunks
+        mediaRecorder.ondataavailable =
+          (event) => {
+
+            if (
+              event.data.size > 0
+            ) {
+
+              chunksRef.current.push(
+                event.data
+              );
+            }
+          };
+
+        // When recording stops
+        mediaRecorder.onstop =
+          async () => {
+
+            // Create Blob
+            const blob = new Blob(
+
+              chunksRef.current,
+
+              {
+                type:
+                  "audio/webm",
+              }
+            );
+
+            // Create local URL
+            const url =
+              URL.createObjectURL(
+                blob
+              );
+
+            // Save audio URL
+            setAudioURL(url);
+
+            // Send audio to backend
+            await sendAudioToBackend(
+              blob
+            );
+          };
+
+        // Start recording
+        mediaRecorder.start();
+
+        setIsRecording(true);
+
+        setSeconds(0);
+
+      } catch (error) {
+
+        console.error(error);
+
+        alert(
+          "Microphone permission denied"
+        );
+      }
+    };
 
   // Stop Recording
-  const stopRecording = () => {
+  const stopRecording =
+    () => {
 
-    mediaRecorderRef.current.stop();
+      mediaRecorderRef
+        .current
+        .stop();
 
-    setIsRecording(false);
-  };
+      setIsRecording(false);
+    };
 
   return (
 
-    <div className="h-screen flex flex-col items-center justify-center gap-4">
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center gap-6 p-6">
 
-      <h1 className="text-3xl font-bold">
+      <h1 className="text-4xl font-bold">
 
-        Audio Recorder
+        Speech To Text App
 
       </h1>
 
@@ -130,7 +206,7 @@ function App() {
       {
         isRecording && (
 
-          <div className="text-red-500 font-bold">
+          <div className="text-red-500 font-bold text-xl">
 
             🔴 Recording...
 
@@ -149,9 +225,13 @@ function App() {
       <div className="flex gap-4">
 
         <button
-          onClick={startRecording}
-          disabled={isRecording}
-          className="bg-green-500 text-white px-4 py-2 rounded"
+          onClick={
+            startRecording
+          }
+          disabled={
+            isRecording
+          }
+          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
         >
 
           Start Recording
@@ -159,9 +239,13 @@ function App() {
         </button>
 
         <button
-          onClick={stopRecording}
-          disabled={!isRecording}
-          className="bg-red-500 text-white px-4 py-2 rounded"
+          onClick={
+            stopRecording
+          }
+          disabled={
+            !isRecording
+          }
+          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
         >
 
           Stop Recording
@@ -195,6 +279,40 @@ function App() {
           </div>
         )
       }
+
+      {/* Transcript Panel */}
+      <div className="bg-white shadow-lg rounded-xl p-6 w-full max-w-2xl">
+
+        <h2 className="text-2xl font-bold mb-4">
+
+          Transcript
+
+        </h2>
+
+        {
+          loading ? (
+
+            <div className="text-blue-500">
+
+              Transcribing audio...
+
+            </div>
+
+          ) : (
+
+            <div className="border rounded p-4 min-h-[120px]">
+
+              {
+                transcript
+                  ? transcript
+                  : "Transcript will appear here..."
+              }
+
+            </div>
+          )
+        }
+
+      </div>
 
     </div>
   );
