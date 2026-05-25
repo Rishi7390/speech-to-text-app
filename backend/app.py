@@ -10,7 +10,7 @@ import os
 load_dotenv()
 
 # Get API key
-DEEPGRAM_API_KEY = os.getenv("1736888ed9a4309d5392fc113112c68120d06709")
+DEEPGRAM_API_KEY = os.getenv("Deepgram API Key")
 
 # Create Flask app
 app = Flask(__name__)
