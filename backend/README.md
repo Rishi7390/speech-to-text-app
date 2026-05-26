@@ -7,3 +7,5 @@ Built using:
 
 Purpose:
 Handles audio processing and speech-to-text API communication.
+
+Updated project documentation
