@@ -16,4 +16,5 @@ __pycache__/
 
 # OS files
 .DS_Store
-Thumbs.db
+Thumbs.dbbackend/uploads/*.wav
+backend/uploads/*.webm
