@@ -4,50 +4,33 @@ import {
   useState
 } from "react";
 
-import {
-  Link
-} from "react-router-dom";
+import { Link } from "react-router-dom";
+
+import { saveAs } from "file-saver";
 
 function App() {
 
-  // Recording state
-  const [recording,
-    setRecording] =
+  const [recording, setRecording] =
     useState(false);
 
-  // Transcript text
-  const [transcript,
-    setTranscript] =
+  const [transcript, setTranscript] =
     useState("");
 
-  // Audio player URL
-  const [audioURL,
-    setAudioURL] =
+  const [audioURL, setAudioURL] =
     useState("");
 
-  // Loading state
-  const [loading,
-    setLoading] =
-    useState(false);
-
-  // Timer
-  const [seconds,
-    setSeconds] =
+  const [seconds, setSeconds] =
     useState(0);
 
-  // MediaRecorder reference
   const mediaRecorderRef =
     useRef(null);
 
-  // Audio chunks
   const audioChunksRef =
     useRef([]);
 
-  // Timer reference
   const timerRef =
     useRef(null);
 
-  // Timer effect
   useEffect(() => {
 
     if (recording) {
@@ -75,9 +58,9 @@ function App() {
 
   }, [recording]);
 
-  // ------------------------------
+  // -----------------------
   // START RECORDING
-  // ------------------------------
+  // -----------------------
 
   const startRecording =
     async () => {
@@ -88,22 +71,18 @@ function App() {
           await navigator
             .mediaDevices
             .getUserMedia({
-              audio: true,
+              audio: true
             });
 
         const mediaRecorder =
           new MediaRecorder(stream);
 
-        // Reset old data
         audioChunksRef.current = [];
 
         setTranscript("");
 
-        setAudioURL("");
-
         setSeconds(0);
 
-        // Save chunks
         mediaRecorder.ondataavailable =
           (event) => {
 
@@ -111,28 +90,23 @@ function App() {
               event.data.size > 0
             ) {
 
-              audioChunksRef.current.push(
-                event.data
-              );
+              audioChunksRef.current
+                .push(event.data);
             }
           };
 
-        // When recording stops
         mediaRecorder.onstop =
           async () => {
 
             const audioBlob =
               new Blob(
-
                 audioChunksRef.current,
-
                 {
                   type:
-                  "audio/webm",
+                    "audio/webm"
                 }
               );
 
-            // Audio preview
             const audioUrl =
               URL.createObjectURL(
                 audioBlob
@@ -140,7 +114,6 @@ function App() {
 
             setAudioURL(audioUrl);
 
-            // Create form data
             const formData =
               new FormData();
 
@@ -152,21 +125,16 @@ function App() {
 
             try {
 
-              setLoading(true);
-
               setTranscript(
                 "Transcribing..."
               );
 
-              // Send to backend
               const response =
                 await fetch(
-
                   "http://localhost:5000/transcribe",
-
                   {
                     method: "POST",
-                    body: formData,
+                    body: formData
                   }
                 );
 
@@ -184,136 +152,128 @@ function App() {
               } else {
 
                 setTranscript(
-
                   data.error ||
-
                   "Transcription failed"
                 );
               }
 
             } catch (error) {
 
-              console.log(error);
+              console.error(error);
 
               setTranscript(
                 "Server error"
               );
-
-            } finally {
-
-              setLoading(false);
             }
           };
 
-        // Save recorder
         mediaRecorderRef.current =
           mediaRecorder;
 
-        // Start recording
         mediaRecorder.start();
 
         setRecording(true);
 
       } catch (error) {
 
-        console.log(error);
+        console.error(error);
 
         alert(
-          "Microphone permission denied"
+          "Microphone access denied"
         );
       }
     };
 
-  // ------------------------------
+  // -----------------------
   // STOP RECORDING
-  // ------------------------------
+  // -----------------------
 
-  const stopRecording =
-    () => {
+  const stopRecording = () => {
 
-      mediaRecorderRef.current
-        .stop();
+    mediaRecorderRef.current.stop();
 
-      setRecording(false);
-    };
+    setRecording(false);
+  };
 
-  // ------------------------------
-  // UI
-  // ------------------------------
+  // -----------------------
+  // COPY TRANSCRIPT
+  // -----------------------
+
+  const copyTranscript = () => {
+
+    navigator.clipboard.writeText(
+      transcript
+    );
+
+    alert(
+      "Transcript copied!"
+    );
+  };
+
+  // -----------------------
+  // DOWNLOAD TXT
+  // -----------------------
+
+  const downloadTranscript = () => {
+
+    const blob = new Blob(
+      [transcript],
+      {
+        type: "text/plain;charset=utf-8"
+      }
+    );
+
+    saveAs(
+      blob,
+      "transcript.txt"
+    );
+  };
 
   return (
 
     <div
       style={{
         minHeight: "100vh",
-        background: "#0f172a",
+        background: "#020c2b",
         color: "white",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        paddingTop: "50px",
-        fontFamily: "Arial",
+        padding: "40px 20px",
+        fontFamily: "Arial"
       }}
     >
 
-      {/* Heading */}
-
       <h1
         style={{
-          fontSize: "40px",
-          marginBottom: "20px"
+          fontSize: "50px",
+          marginBottom: "10px"
         }}
       >
-
         Speech To Text App
-
       </h1>
-
-      {/* History Link */}
 
       <Link
         to="/history"
         style={{
           color: "#38bdf8",
-          marginBottom: "30px",
           textDecoration: "none",
-          fontSize: "18px"
+          marginBottom: "30px",
+          fontSize: "22px"
         }}
       >
-
         View Transcript History →
-
       </Link>
-
-      {/* Recording State */}
-
-      {recording && (
-
-        <div
-          style={{
-            marginBottom: "15px",
-            color: "#f43f5e",
-            fontSize: "20px",
-            fontWeight: "bold",
-          }}
-        >
-
-          🔴 Recording...
-
-        </div>
-      )}
 
       {/* Timer */}
 
       <div
         style={{
           marginBottom: "20px",
-          fontSize: "20px",
+          fontSize: "28px"
         }}
       >
-
         Timer: {seconds}s
-
       </div>
 
       {/* Buttons */}
@@ -322,57 +282,44 @@ function App() {
 
         <button
           onClick={startRecording}
+          aria-label="Start Recording"
           style={{
-            padding: "12px 25px",
-            fontSize: "16px",
-            cursor: "pointer",
-            borderRadius: "10px",
+            padding:
+              "14px 28px",
+            fontSize: "22px",
             border: "none",
-            background: "#22c55e",
-            color: "white"
+            borderRadius: "12px",
+            background:
+              "#22c55e",
+            color: "white",
+            cursor: "pointer"
           }}
         >
-
           Start Recording
-
         </button>
 
       ) : (
 
         <button
           onClick={stopRecording}
+          aria-label="Stop Recording"
           style={{
-            padding: "12px 25px",
-            fontSize: "16px",
-            cursor: "pointer",
-            borderRadius: "10px",
+            padding:
+              "14px 28px",
+            fontSize: "22px",
             border: "none",
-            background: "#ef4444",
-            color: "white"
+            borderRadius: "12px",
+            background:
+              "#ef4444",
+            color: "white",
+            cursor: "pointer"
           }}
         >
-
           Stop Recording
-
         </button>
       )}
 
-      {/* Loading */}
-
-      {loading && (
-
-        <p
-          style={{
-            marginTop: "20px"
-          }}
-        >
-
-          Processing audio...
-
-        </p>
-      )}
-
-      {/* Audio Player */}
+      {/* Audio */}
 
       {audioURL && (
 
@@ -381,7 +328,8 @@ function App() {
           src={audioURL}
           style={{
             marginTop: "30px",
-            width: "400px"
+            width: "90%",
+            maxWidth: "500px"
           }}
         />
       )}
@@ -391,34 +339,82 @@ function App() {
       <div
         style={{
           marginTop: "40px",
-          width: "70%",
+          width: "90%",
+          maxWidth: "700px",
           background: "#1e293b",
-          padding: "25px",
-          borderRadius: "12px"
+          padding: "30px",
+          borderRadius: "20px"
         }}
       >
 
         <h2
           style={{
+            textAlign: "center",
             marginBottom: "20px"
           }}
         >
-
           Transcript
-
         </h2>
 
         <p
           style={{
             lineHeight: "1.8",
+            textAlign: "center",
             fontSize: "18px"
           }}
         >
-
-          {transcript ||
-            "Your transcript will appear here..."}
-
+          {transcript}
         </p>
+
+        {/* Action Buttons */}
+
+        {transcript &&
+         transcript !== "Transcribing..." && (
+
+          <div
+            style={{
+              display: "flex",
+              gap: "20px",
+              justifyContent: "center",
+              marginTop: "25px",
+              flexWrap: "wrap"
+            }}
+          >
+
+            <button
+              onClick={
+                copyTranscript
+              }
+              style={{
+                padding:
+                  "10px 20px",
+                border: "none",
+                borderRadius: "10px",
+                cursor: "pointer",
+                fontSize: "16px"
+              }}
+            >
+              Copy
+            </button>
+
+            <button
+              onClick={
+                downloadTranscript
+              }
+              style={{
+                padding:
+                  "10px 20px",
+                border: "none",
+                borderRadius: "10px",
+                cursor: "pointer",
+                fontSize: "16px"
+              }}
+            >
+              Download TXT
+            </button>
+
+          </div>
+        )}
 
       </div>
 
