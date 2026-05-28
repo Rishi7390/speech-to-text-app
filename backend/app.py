@@ -2,26 +2,50 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 from dotenv import load_dotenv
-
 from pydub import AudioSegment
+from supabase import create_client
 
 import requests
 import os
 
-# Load environment variables
+# ------------------------------
+# LOAD ENV VARIABLES
+# ------------------------------
+
 load_dotenv()
 
-<<<<<<< HEAD
-# Get API key
-DEEPGRAM_API_KEY = os.getenv("Deepgram API Key")
-=======
-# API Key
+# Deepgram API Key
 DEEPGRAM_API_KEY = os.getenv(
     "DEEPGRAM_API_KEY"
 )
->>>>>>> 6de4d89 (Completed stable speech-to-text recording and transcription system)
 
-# Create Flask app
+# Supabase URL
+SUPABASE_URL = os.getenv(
+    "SUPABASE_URL"
+)
+
+# Supabase Key
+SUPABASE_KEY = os.getenv(
+    "SUPABASE_KEY"
+)
+
+# Debug print
+print("SUPABASE URL:", SUPABASE_URL)
+print("SUPABASE KEY FOUND:", bool(SUPABASE_KEY))
+
+# ------------------------------
+# CREATE SUPABASE CLIENT
+# ------------------------------
+
+supabase = create_client(
+    SUPABASE_URL,
+    SUPABASE_KEY
+)
+
+# ------------------------------
+# CREATE FLASK APP
+# ------------------------------
+
 app = Flask(__name__)
 
 # Enable CORS
@@ -35,18 +59,26 @@ os.makedirs(
     exist_ok=True
 )
 
-# Max file size
+# Max upload size = 10MB
 MAX_FILE_SIZE = (
     10 * 1024 * 1024
 )
+
+# ------------------------------
+# HOME ROUTE
+# ------------------------------
 
 @app.route("/")
 def home():
 
     return {
         "message":
-        "Backend running"
+        "Backend running successfully"
     }
+
+# ------------------------------
+# TRANSCRIBE ROUTE
+# ------------------------------
 
 @app.route(
     "/transcribe",
@@ -57,15 +89,20 @@ def transcribe():
 
     try:
 
+        print("\n===== NEW TRANSCRIPTION =====")
+
+        # Validate upload
         if "file" not in request.files:
 
             return jsonify({
                 "error":
-                "No audio uploaded"
+                "No audio file uploaded"
             }), 400
 
+        # Get uploaded file
         f = request.files["file"]
 
+        # Empty filename
         if f.filename == "":
 
             return jsonify({
@@ -73,7 +110,9 @@ def transcribe():
                 "Empty filename"
             }), 400
 
-        # Save uploaded file
+        print("Audio file received")
+
+        # File paths
         original_path = os.path.join(
             UPLOAD_FOLDER,
             "recording.webm"
@@ -84,9 +123,12 @@ def transcribe():
             "converted.wav"
         )
 
+        # Save uploaded audio
         f.save(original_path)
 
-        # Validate file size
+        print("Audio saved")
+
+        # Empty file validation
         if (
             os.path.getsize(
                 original_path
@@ -98,23 +140,47 @@ def transcribe():
                 "Empty audio file"
             }), 400
 
-        # Convert audio
+        # Large file validation
+        if (
+            os.path.getsize(
+                original_path
+            ) > MAX_FILE_SIZE
+        ):
+
+            return jsonify({
+                "error":
+                "File too large"
+            }), 400
+
+        # ------------------------------
+        # AUDIO CONVERSION
+        # ------------------------------
+
+        print("Converting audio...")
+
         audio = AudioSegment.from_file(
             original_path
         )
 
-        audio = (
+        converted_audio = (
             audio
             .set_frame_rate(16000)
             .set_channels(1)
         )
 
-        audio.export(
+        converted_audio.export(
             wav_path,
             format="wav"
         )
 
-        # Send to Deepgram
+        print("WAV conversion successful")
+
+        # ------------------------------
+        # SEND TO DEEPGRAM
+        # ------------------------------
+
+        print("Sending to Deepgram...")
+
         with open(
             wav_path,
             "rb"
@@ -136,7 +202,25 @@ def transcribe():
                 data=audio_file
             )
 
+        print("Deepgram status:",
+              response.status_code)
+
         result = response.json()
+
+        print("Deepgram response:")
+        print(result)
+
+        # Validate transcript response
+        if (
+            "results" not in result
+        ):
+
+            return jsonify({
+                "error":
+                "Deepgram transcription failed",
+                "details":
+                result
+            }), 500
 
         transcript = (
             result["results"]["channels"][0]
@@ -144,23 +228,140 @@ def transcribe():
             ["transcript"]
         )
 
+        print("Transcript:", transcript)
+
+        # Empty transcript check
+        if transcript.strip() == "":
+
+            transcript = (
+                "No speech detected"
+            )
+
+        # ------------------------------
+        # SAVE TO SUPABASE
+        # ------------------------------
+
+        print("Saving to Supabase...")
+
+        supabase.table(
+            "transcripts"
+        ).insert({
+
+            "text":
+            transcript,
+
+            "duration_seconds":
+            0,
+
+            "filename":
+            f.filename,
+
+            "language":
+            "en"
+
+        }).execute()
+
+        print("Transcript saved successfully")
+
+        # ------------------------------
+        # RETURN RESPONSE
+        # ------------------------------
+
         return jsonify({
+
             "transcript":
             transcript
+
         })
 
     except Exception as e:
 
+        print("ERROR:", str(e))
+
         return jsonify({
-            "error": str(e)
+
+            "error":
+            str(e)
+
         }), 500
+
+# ------------------------------
+# GET ALL TRANSCRIPTS
+# ------------------------------
+
+@app.route(
+    "/transcripts",
+    methods=["GET"]
+)
+
+def get_transcripts():
+
+    try:
+
+        response = (
+            supabase
+            .table("transcripts")
+            .select("*")
+            .order(
+                "id",
+                desc=True
+            )
+            .execute()
+        )
+
+        return jsonify(
+            response.data
+        )
+
+    except Exception as e:
+
+        return jsonify({
+
+            "error":
+            str(e)
+
+        }), 500
+
+# ------------------------------
+# GET SINGLE TRANSCRIPT
+# ------------------------------
+
+@app.route(
+    "/transcripts/<int:id>",
+    methods=["GET"]
+)
+
+def get_single_transcript(id):
+
+    try:
+
+        response = (
+            supabase
+            .table("transcripts")
+            .select("*")
+            .eq("id", id)
+            .execute()
+        )
+
+        return jsonify(
+            response.data
+        )
+
+    except Exception as e:
+
+        return jsonify({
+
+            "error":
+            str(e)
+
+        }), 500
+
+# ------------------------------
+# RUN FLASK APP
+# ------------------------------
 
 if __name__ == "__main__":
 
-<<<<<<< HEAD
-    app.run(debug=True)
-=======
     app.run(
         debug=True
     )
->>>>>>> 6de4d89 (Completed stable speech-to-text recording and transcription system)

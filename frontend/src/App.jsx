@@ -1,166 +1,245 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState
+} from "react";
+
+import {
+  Link
+} from "react-router-dom";
 
 function App() {
 
-  const [recording, setRecording] =
+  // Recording state
+  const [recording,
+    setRecording] =
     useState(false);
 
-  const [transcript, setTranscript] =
+  // Transcript text
+  const [transcript,
+    setTranscript] =
     useState("");
 
-  const [audioURL, setAudioURL] =
+  // Audio player URL
+  const [audioURL,
+    setAudioURL] =
     useState("");
 
-  const [seconds, setSeconds] =
+  // Loading state
+  const [loading,
+    setLoading] =
+    useState(false);
+
+  // Timer
+  const [seconds,
+    setSeconds] =
     useState(0);
 
+  // MediaRecorder reference
   const mediaRecorderRef =
     useRef(null);
 
+  // Audio chunks
   const audioChunksRef =
     useRef([]);
 
+  // Timer reference
   const timerRef =
     useRef(null);
 
+  // Timer effect
   useEffect(() => {
 
     if (recording) {
 
-      timerRef.current = setInterval(() => {
+      timerRef.current =
+        setInterval(() => {
 
-        setSeconds((prev) => prev + 1);
+          setSeconds(
+            (prev) => prev + 1
+          );
 
-      }, 1000);
+        }, 1000);
 
     } else {
 
-      clearInterval(timerRef.current);
+      clearInterval(
+        timerRef.current
+      );
     }
 
     return () =>
-      clearInterval(timerRef.current);
+      clearInterval(
+        timerRef.current
+      );
 
   }, [recording]);
 
-  const startRecording = async () => {
+  // ------------------------------
+  // START RECORDING
+  // ------------------------------
 
-    try {
+  const startRecording =
+    async () => {
 
-      const stream =
-        await navigator.mediaDevices.getUserMedia({
-          audio: true,
-        });
+      try {
 
-      const mediaRecorder =
-        new MediaRecorder(stream);
+        const stream =
+          await navigator
+            .mediaDevices
+            .getUserMedia({
+              audio: true,
+            });
 
-      audioChunksRef.current = [];
+        const mediaRecorder =
+          new MediaRecorder(stream);
 
-      setTranscript("");
+        // Reset old data
+        audioChunksRef.current = [];
 
-      setSeconds(0);
+        setTranscript("");
 
-      mediaRecorder.ondataavailable =
-        (event) => {
+        setAudioURL("");
 
-          if (event.data.size > 0) {
+        setSeconds(0);
 
-            audioChunksRef.current.push(
-              event.data
-            );
-          }
-        };
+        // Save chunks
+        mediaRecorder.ondataavailable =
+          (event) => {
 
-      mediaRecorder.onstop =
-        async () => {
+            if (
+              event.data.size > 0
+            ) {
 
-          const audioBlob = new Blob(
-            audioChunksRef.current,
-            {
-              type: "audio/webm",
+              audioChunksRef.current.push(
+                event.data
+              );
             }
-          );
+          };
 
-          const audioUrl =
-            URL.createObjectURL(audioBlob);
+        // When recording stops
+        mediaRecorder.onstop =
+          async () => {
 
-          setAudioURL(audioUrl);
+            const audioBlob =
+              new Blob(
 
-          const formData =
-            new FormData();
+                audioChunksRef.current,
 
-          formData.append(
-            "file",
-            audioBlob,
-            "recording.webm"
-          );
-
-          try {
-
-            setTranscript(
-              "Transcribing..."
-            );
-
-            const response =
-              await fetch(
-                "http://localhost:5000/transcribe",
                 {
-                  method: "POST",
-                  body: formData,
+                  type:
+                  "audio/webm",
                 }
               );
 
-            const data =
-              await response.json();
-
-            if (data.transcript) {
-
-              setTranscript(
-                data.transcript
+            // Audio preview
+            const audioUrl =
+              URL.createObjectURL(
+                audioBlob
               );
 
-            } else {
+            setAudioURL(audioUrl);
 
-              setTranscript(
-                data.error ||
-                "Transcription failed"
-              );
-            }
+            // Create form data
+            const formData =
+              new FormData();
 
-          } catch (error) {
-
-            console.error(error);
-
-            setTranscript(
-              "Server error"
+            formData.append(
+              "file",
+              audioBlob,
+              "recording.webm"
             );
-          }
-        };
 
-      mediaRecorderRef.current =
-        mediaRecorder;
+            try {
 
-      mediaRecorder.start();
+              setLoading(true);
 
-      setRecording(true);
+              setTranscript(
+                "Transcribing..."
+              );
 
-    } catch (error) {
+              // Send to backend
+              const response =
+                await fetch(
 
-      console.error(error);
+                  "http://localhost:5000/transcribe",
 
-      alert(
-        "Microphone access denied"
-      );
-    }
-  };
+                  {
+                    method: "POST",
+                    body: formData,
+                  }
+                );
 
-  const stopRecording = () => {
+              const data =
+                await response.json();
 
-    mediaRecorderRef.current.stop();
+              if (
+                data.transcript
+              ) {
 
-    setRecording(false);
-  };
+                setTranscript(
+                  data.transcript
+                );
+
+              } else {
+
+                setTranscript(
+
+                  data.error ||
+
+                  "Transcription failed"
+                );
+              }
+
+            } catch (error) {
+
+              console.log(error);
+
+              setTranscript(
+                "Server error"
+              );
+
+            } finally {
+
+              setLoading(false);
+            }
+          };
+
+        // Save recorder
+        mediaRecorderRef.current =
+          mediaRecorder;
+
+        // Start recording
+        mediaRecorder.start();
+
+        setRecording(true);
+
+      } catch (error) {
+
+        console.log(error);
+
+        alert(
+          "Microphone permission denied"
+        );
+      }
+    };
+
+  // ------------------------------
+  // STOP RECORDING
+  // ------------------------------
+
+  const stopRecording =
+    () => {
+
+      mediaRecorderRef.current
+        .stop();
+
+      setRecording(false);
+    };
+
+  // ------------------------------
+  // UI
+  // ------------------------------
 
   return (
 
@@ -177,9 +256,36 @@ function App() {
       }}
     >
 
-      <h1>Speech To Text App</h1>
+      {/* Heading */}
 
-      {/* Recording Status */}
+      <h1
+        style={{
+          fontSize: "40px",
+          marginBottom: "20px"
+        }}
+      >
+
+        Speech To Text App
+
+      </h1>
+
+      {/* History Link */}
+
+      <Link
+        to="/history"
+        style={{
+          color: "#38bdf8",
+          marginBottom: "30px",
+          textDecoration: "none",
+          fontSize: "18px"
+        }}
+      >
+
+        View Transcript History →
+
+      </Link>
+
+      {/* Recording State */}
 
       {recording && (
 
@@ -191,7 +297,9 @@ function App() {
             fontWeight: "bold",
           }}
         >
+
           🔴 Recording...
+
         </div>
       )}
 
@@ -200,10 +308,12 @@ function App() {
       <div
         style={{
           marginBottom: "20px",
-          fontSize: "18px",
+          fontSize: "20px",
         }}
       >
+
         Timer: {seconds}s
+
       </div>
 
       {/* Buttons */}
@@ -213,12 +323,18 @@ function App() {
         <button
           onClick={startRecording}
           style={{
-            padding: "10px 20px",
+            padding: "12px 25px",
             fontSize: "16px",
             cursor: "pointer",
+            borderRadius: "10px",
+            border: "none",
+            background: "#22c55e",
+            color: "white"
           }}
         >
+
           Start Recording
+
         </button>
 
       ) : (
@@ -226,13 +342,34 @@ function App() {
         <button
           onClick={stopRecording}
           style={{
-            padding: "10px 20px",
+            padding: "12px 25px",
             fontSize: "16px",
             cursor: "pointer",
+            borderRadius: "10px",
+            border: "none",
+            background: "#ef4444",
+            color: "white"
           }}
         >
+
           Stop Recording
+
         </button>
+      )}
+
+      {/* Loading */}
+
+      {loading && (
+
+        <p
+          style={{
+            marginTop: "20px"
+          }}
+        >
+
+          Processing audio...
+
+        </p>
       )}
 
       {/* Audio Player */}
@@ -243,30 +380,47 @@ function App() {
           controls
           src={audioURL}
           style={{
-            marginTop: "25px",
+            marginTop: "30px",
+            width: "400px"
           }}
         />
       )}
 
       {/* Transcript */}
 
-      <h2
+      <div
         style={{
-          marginTop: "30px",
-        }}
-      >
-        Transcript
-      </h2>
-
-      <p
-        style={{
+          marginTop: "40px",
           width: "70%",
-          textAlign: "center",
-          lineHeight: "1.7",
+          background: "#1e293b",
+          padding: "25px",
+          borderRadius: "12px"
         }}
       >
-        {transcript}
-      </p>
+
+        <h2
+          style={{
+            marginBottom: "20px"
+          }}
+        >
+
+          Transcript
+
+        </h2>
+
+        <p
+          style={{
+            lineHeight: "1.8",
+            fontSize: "18px"
+          }}
+        >
+
+          {transcript ||
+            "Your transcript will appear here..."}
+
+        </p>
+
+      </div>
 
     </div>
   );
