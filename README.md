@@ -9,7 +9,7 @@ This project was developed through a structured 14-day development roadmap cover
 # 🌐 Live Demo
 
 Frontend:
-https://speech-to-text-app-gmgz-8zeynjpa8-rishi834047-4023s-projects.vercel.app/
+https://speech-to-text-app-gmgz.vercel.app/
 
 Backend:
 https://speech-to-text-app-e5va.onrender.com/
