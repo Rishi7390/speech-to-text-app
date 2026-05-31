@@ -6,6 +6,26 @@ This project was developed through a structured 14-day development roadmap cover
 
 ---
 
+# 🌐 Live Demo
+
+Frontend:
+https://speech-to-text-app-gmgz-8zeynjpa8-rishi834047-4023s-projects.vercel.app/
+
+Backend:
+https://speech-to-text-app-e5va.onrender.com/
+
+
+# 📸 Screenshots
+
+## Home Page
+
+<img width="1071" height="872" alt="image" src="https://github.com/user-attachments/assets/568a38f0-3965-4e2a-a802-2a0cf8b43c05" />
+
+## Generated Transcript
+
+<img width="1017" height="323" alt="image" src="https://github.com/user-attachments/assets/1ce797cc-b9ec-4e10-ac64-9facb1a3f8ad" />
+
+
 # 🚀 Features
 
 ## Core Features
