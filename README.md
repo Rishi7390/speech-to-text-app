@@ -1,26 +1,36 @@
 # 🎤 Speech-to-Text Application
 
-A full-stack Speech-to-Text web application that records audio directly from the browser, converts speech into text using the Deepgram API, and stores transcript history using Supabase.
+A production-ready full-stack Speech-to-Text web application that allows users to record audio directly from the browser, upload audio files, convert speech into text using the Deepgram API, save transcript history in Supabase, and download transcripts.
 
-The application provides real-time transcription, audio recording, transcript history management, export features, and a responsive modern UI.
+This project was developed through a structured 14-day development roadmap covering frontend, backend, database integration, testing, deployment, documentation, and release management.
 
 ---
 
 # 🚀 Features
 
-* 🎙️ Real-time audio recording
-* 📝 Speech-to-text transcription using Deepgram API
+## Core Features
+
+* 🎙️ Record audio directly from browser
+* 📤 Upload audio files
+* 📝 Convert speech to text using Deepgram API
 * 📂 Transcript history management
-* 💾 Save transcripts to Supabase database
-* 📥 Download transcript as `.txt`
+* 💾 Store transcripts in Supabase
+* 📥 Download transcript as TXT
 * 📋 Copy transcript to clipboard
 * 🔊 Audio playback support
 * ⏱️ Recording timer
-* 📱 Responsive UI design
-* 🌐 Frontend and backend integration
-* 🔐 Environment variable security using `.env`
+* 📱 Responsive UI
 * ⚡ Fast Flask backend API
-* 🎨 Modern React frontend
+* 🌐 Full frontend-backend integration
+
+## Production Features
+
+* 🔐 Environment variable security
+* 🧪 Automated testing using Pytest
+* 🚀 Production deployment support
+* 📝 Documentation and changelog
+* 🏷️ Release versioning
+* 📹 Demo video and GIF
 
 ---
 
@@ -43,26 +53,37 @@ The application provides real-time transcription, audio recording, transcript hi
 * Requests
 * Pydub
 * Python-Dotenv
+* Gunicorn
 
 ## Database
 
 * Supabase
 
-## Speech-to-Text Provider
+## Speech-to-Text
 
 * Deepgram API
+
+## Testing
+
+* Pytest
+
+## Deployment
+
+* Render / Railway / VPS
+* GitHub Actions (Optional)
 
 ---
 
 # 📂 Project Structure
 
-```bash
+```text
 speech-to-text-app/
 │
 ├── frontend/
 │   ├── src/
 │   │   ├── App.jsx
 │   │   ├── History.jsx
+│   │   ├── components/
 │   │   ├── main.jsx
 │   │   └── index.css
 │   │
@@ -76,83 +97,68 @@ speech-to-text-app/
 │   │
 │   ├── app.py
 │   ├── requirements.txt
+│   ├── Procfile
 │   └── .env
 │
 ├── README.md
+├── CHANGELOG.md
+├── TODO.md
 └── .gitignore
 ```
 
 ---
 
-# 🖥️ Application Screens
-
-## 🎙️ Recorder Screen
+# 🏗️ Architecture
 
 ```text
- -------------------------------------------------
-|             Speech to Text App                  |
- -------------------------------------------------
-|                                                 |
-|         [ Start Recording Button ]              |
-|                                                 |
-|         Live Transcript:                        |
-|         --------------------------------        |
-|         Hello everyone welcome to...            |
-|         --------------------------------        |
-|                                                 |
- -------------------------------------------------
+User
+ │
+ ▼
+React Frontend
+ │
+ ▼
+Flask API
+ │
+ ▼
+Deepgram API
+ │
+ ▼
+Transcript
+ │
+ ├── Save to Supabase
+ │
+ ├── Display on UI
+ │
+ └── Download TXT
 ```
 
 ---
 
-## 📂 Transcript History Screen
+# ⚙️ Local Installation
 
-```text
- -------------------------------------------------
-|             Transcript History                  |
- -------------------------------------------------
-| 1. Meeting Notes - Today                        |
-| 2. Lecture Recording - Yesterday                |
-| 3. Voice Memo                                   |
-|                                                 |
- -------------------------------------------------
-```
-
----
-
-# ⚙️ Installation & Setup
-
-## 1️⃣ Clone Repository
+## Clone Repository
 
 ```bash
 git clone https://github.com/Rishi7390/speech-to-text-app.git
+
+cd speech-to-text-app
 ```
 
 ---
 
 # 📦 Frontend Setup
 
-## Move to frontend
-
 ```bash
 cd frontend
-```
 
-## Install dependencies
-
-```bash
 npm install
-```
 
-## Run frontend
-
-```bash
 npm run dev
 ```
 
-Frontend runs on:
+Frontend:
 
-```bash
+```text
 http://localhost:5173
 ```
 
@@ -160,45 +166,39 @@ http://localhost:5173
 
 # ⚙️ Backend Setup
 
-## Move to backend
-
 ```bash
 cd backend
 ```
 
-## Create virtual environment
+Create Virtual Environment
 
 ```bash
-py -3.12 -m venv venv
+python -m venv venv
 ```
 
-## Activate virtual environment
+Activate Environment
 
-### Windows
+Windows
 
 ```bash
 venv\Scripts\activate
 ```
 
----
-
-## Install dependencies
+Install Requirements
 
 ```bash
-pip install flask flask-cors python-dotenv pydub requests supabase pytest
+pip install -r requirements.txt
 ```
 
----
-
-## Run backend
+Run Backend
 
 ```bash
 python app.py
 ```
 
-Backend runs on:
+Backend:
 
-```bash
+```text
 http://localhost:5000
 ```
 
@@ -206,51 +206,55 @@ http://localhost:5000
 
 # 🔐 Environment Variables
 
-Create a `.env` file inside `backend/`
+Create a `.env` file inside backend folder.
 
 ```env
-DEEPGRAM_API_KEY=your_deepgram_api_key
+DEEPGRAM_API_KEY=your_api_key
 
-SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_URL=your_supabase_url
 
-SUPABASE_KEY=your_supabase_publishable_key
+SUPABASE_KEY=your_supabase_key
 ```
 
 ---
 
-# 🎧 Audio Processing Flow
+# 🎧 Application Flow
 
 ```text
-User Speaks
-↓
-Frontend Records Audio
-↓
-Audio Blob Created
-↓
-Frontend Sends Audio to Flask
-↓
-Flask Converts Audio to WAV
-↓
-Flask Sends Audio to Deepgram
-↓
-Deepgram Returns Transcript
-↓
-Transcript Saved to Supabase
-↓
-Frontend Displays Transcript
+User Records Audio
+        │
+        ▼
+Frontend Creates Audio Blob
+        │
+        ▼
+Upload to Flask Backend
+        │
+        ▼
+Deepgram Transcription API
+        │
+        ▼
+Transcript Generated
+        │
+ ┌──────┴──────┐
+ ▼             ▼
+Save        Display
+to DB       on UI
+ │
+ ▼
+Download TXT
 ```
 
 ---
 
 # 🌐 API Endpoints
 
-## Home Route
+## Health Check
 
 ```http
 GET /
 ```
 
-### Response
+Response
 
 ```json
 {
@@ -266,11 +270,7 @@ GET /
 POST /transcribe
 ```
 
-### Request
-
-Multipart form-data with audio file.
-
-### Response
+Response
 
 ```json
 {
@@ -280,7 +280,7 @@ Multipart form-data with audio file.
 
 ---
 
-## Get All Transcripts
+## Get Transcripts
 
 ```http
 GET /transcripts
@@ -288,7 +288,7 @@ GET /transcripts
 
 ---
 
-## Get Single Transcript
+## Get Transcript By ID
 
 ```http
 GET /transcripts/:id
@@ -296,13 +296,9 @@ GET /transcripts/:id
 
 ---
 
-# 🧪 Testing & QA
+# 🧪 Testing
 
-## Backend Testing
-
-Pytest is used for backend API testing.
-
-### Run tests
+Run Backend Tests
 
 ```bash
 pytest
@@ -318,20 +314,20 @@ python -m pytest
 
 # ✅ Tested Features
 
-* Audio recording
-* Speech transcription
-* Transcript saving
-* Transcript history
-* Audio playback
-* File validation
-* Large file handling
-* Error handling
-* API integration
+* Audio Recording
+* Audio Upload
+* Deepgram Integration
+* Transcript Storage
+* Transcript History
+* Audio Playback
+* Download TXT
+* Error Handling
+* API Testing
 * Responsive UI
 
 ---
 
-# 🌍 Browser Testing
+# 🌍 Browser Compatibility
 
 Successfully tested on:
 
@@ -341,43 +337,172 @@ Successfully tested on:
 
 ---
 
-# 🔒 Security Features
+# 🚀 Deployment
 
-* `.env` file protection
-* API key hiding
-* `.gitignore` configuration
-* Secure backend requests
+## Backend
+
+Production Command
+
+```bash
+gunicorn app:app --bind 0.0.0.0:$PORT
+```
+
+## Frontend
+
+Build Application
+
+```bash
+npm run build
+```
+
+Production Environment Variable
+
+```env
+VITE_API_URL=https://your-backend-url.com
+```
+
+---
+
+# 📹 Demo
+
+## Demo Flow
+
+```text
+Record Audio
+    ↓
+Upload Audio
+    ↓
+Generate Transcript
+    ↓
+View Transcript
+    ↓
+Download Transcript
+```
+
+Files:
+
+```text
+demo.mp4
+demo.gif
+```
 
 ---
 
 # 📥 Export Features
 
+* Download transcript as TXT
 * Copy transcript to clipboard
-* Download transcript as `.txt`
 
 ---
 
-# 📌 Future Improvements
+# 🔒 Security Features
 
-* Real-time streaming transcription
-* Speaker identification
-* Transcript timestamps
-* Authentication system
-* Multi-language transcription
-* DOCX/PDF export
-* Cloud audio storage
+* Environment variables
+* Hidden API keys
+* Secure backend communication
+* Git ignored secrets
+* Input validation
+
+---
+
+# 📈 Development Roadmap (Day 1 – Day 14)
+
+### Days 1–3
+
+* Project setup
+* Flask backend initialization
+* React frontend setup
+
+### Days 4–6
+
+* Audio recording implementation
+* MediaRecorder integration
+
+### Days 7–8
+
+* Deepgram API integration
+* Audio processing pipeline
+
+### Days 9–10
+
+* Supabase integration
+* Transcript storage
+
+### Days 11–12
+
+* Testing
+* Error handling
+* UI improvements
+
+### Day 13
+
+* Production deployment
+* Environment configuration
+* Build optimization
+
+### Day 14
+
+* Documentation
+* Architecture diagram
+* Demo creation
+* Changelog
+* Release versioning
+
+---
+
+# 📄 Changelog
+
+## Version 1.0.0
+
+### Added
+
+* Audio Recording
+* Audio Upload
+* Speech-to-Text Conversion
+* Transcript History
+* Supabase Integration
+* Download TXT
+* Clipboard Support
+* Automated Testing
+* Production Deployment
+
+---
+
+# 📌 Future Enhancements
+
+* Speaker Diarization
+* AI Summarization
+* Translation Support
+* Real-time Streaming
+* Authentication
+* Transcript Search
+* Cloud Storage
+* PDF/DOCX Export
+* Multi-language Support
 
 ---
 
 # 👨‍💻 Author
 
-## Rohit
+Rohit
 
 GitHub:
 https://github.com/Rishi7390
 
 ---
 
-# 📄 License
+# 🏷️ Release
 
-This project is developed for learning and educational purposes.
+Current Release:
+
+```text
+v1.0.0
+```
+
+Initial Production Release.
+
+---
+
+# 📜 License
+
+This project is developed for educational, learning, and portfolio purposes.
