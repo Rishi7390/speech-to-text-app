@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 from dotenv import load_dotenv
-from pydub import AudioSegment
 from supabase import create_client
 
 import requests
@@ -118,13 +117,8 @@ def transcribe():
             "recording.webm"
         )
 
-        wav_path = os.path.join(
-            UPLOAD_FOLDER,
-            "converted.wav"
-        )
-
         # Save uploaded audio
-        f.save(original_path)
+        f.save(original_path)   
 
         print("Audio saved")
 
@@ -152,37 +146,14 @@ def transcribe():
                 "File too large"
             }), 400
 
-        # ------------------------------
-        # AUDIO CONVERSION
-        # ------------------------------
-
-        print("Converting audio...")
-
-        audio = AudioSegment.from_file(
-            original_path
-        )
-
-        converted_audio = (
-            audio
-            .set_frame_rate(16000)
-            .set_channels(1)
-        )
-
-        converted_audio.export(
-            wav_path,
-            format="wav"
-        )
-
-        print("WAV conversion successful")
-
-        # ------------------------------
+         # ------------------------------
         # SEND TO DEEPGRAM
         # ------------------------------
 
         print("Sending to Deepgram...")
 
         with open(
-            wav_path,
+            original_path,
             "rb"
         ) as audio_file:
 
@@ -196,48 +167,16 @@ def transcribe():
                     f"Token {DEEPGRAM_API_KEY}",
 
                     "Content-Type":
-                    "audio/wav"
+                    "audio/webm"
                 },
 
                 data=audio_file
             )
 
-        print("Deepgram status:",
-              response.status_code)
-
-        result = response.json()
-
-        print("Deepgram response:")
-        print(result)
-
-        # Validate transcript response
-        if (
-            "results" not in result
-        ):
-
-            return jsonify({
-                "error":
-                "Deepgram transcription failed",
-                "details":
-                result
-            }), 500
-
-        transcript = (
-            result["results"]["channels"][0]
-            ["alternatives"][0]
-            ["transcript"]
-        )
-
-        print("Transcript:", transcript)
-
-        # Empty transcript check
-        if transcript.strip() == "":
-
-            transcript = (
-                "No speech detected"
-            )
-
-        # ------------------------------
+        print(
+            "Deepgram status:",
+            response.status_code
+        )       # ------------------------------
         # SAVE TO SUPABASE
         # ------------------------------
 
@@ -359,9 +298,17 @@ def get_single_transcript(id):
 # ------------------------------
 # RUN FLASK APP
 # ------------------------------
-
 if __name__ == "__main__":
 
+    port = int(
+        os.environ.get(
+            "PORT",
+            5000
+        )
+    )
+
     app.run(
-        debug=True
+        host="0.0.0.0",
+        port=port,
+        debug=False
     )
