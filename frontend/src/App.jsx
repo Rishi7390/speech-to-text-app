@@ -131,7 +131,7 @@ function App() {
 
               const response =
                 await fetch(
-                  "http://localhost:5000/transcribe",
+                  "https://speech-to-text-app-e5va.onrender.com/transcribe",
                   {
                     method: "POST",
                     body: formData
