@@ -172,11 +172,33 @@ def transcribe():
 
                 data=audio_file
             )
-
         print(
             "Deepgram status:",
             response.status_code
-        )       # ------------------------------
+        )
+
+        # Check Deepgram response
+
+        if response.status_code != 200:
+
+            return jsonify({
+                "error": response.text
+            }), 500
+
+        deepgram_data = response.json()
+
+        transcript = (
+            deepgram_data["results"]
+            ["channels"][0]
+            ["alternatives"][0]
+            ["transcript"]
+        )
+
+        print(
+            "Transcript:",
+            transcript
+        )
+  # ------------------------------
         # SAVE TO SUPABASE
         # ------------------------------
 
